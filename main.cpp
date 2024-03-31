@@ -388,8 +388,6 @@ void storeToken(string theToken, bool& keywordFound, vector<string>& keywords, v
         {
             identifiers.push_back(theToken);
         }
-        else
-            cout << "Unrecognized token: " << theToken << "\n"; //not rlly needed but will help identify errors
     }
 }
 
