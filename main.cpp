@@ -1,5 +1,3 @@
-// Project 1
-
 #include<iostream>
 #include<fstream>
 #include<vector>
@@ -11,12 +9,11 @@ void storeToken(string theToken, bool& keywordFound, vector<string>& keywords, v
 void tokenize(string str);
 void outputVector(vector<string> vec);
 
-int removeComments(string fileName, string& data);
+bool removeComments(string fileName, string& data);
 bool isDigit(string str);
 bool isWord_Digit_Bool(string str);
 bool isSymbol(string str);
 bool isKeyword(string str);
-bool isBool(string str);
 bool isComment(string str);
 bool isBracket(string str);
 bool isWord(string str);
@@ -28,18 +25,19 @@ int main()
 	string fileName = "unknown";
     string data = "";
     
-	cout << "\nEnter the name of the file: ";
-	cin >> fileName;
-
-    if (removeComments(fileName, data))
+    do
     {
-        cout << data << "\n\nOutput2:\n\n";
-        tokenize(data);
-    }
+        cout << "\nEnter the name of the file: ";
+        cin >> fileName;
+    } while (!removeComments(fileName, data));
+
+    cout << data << "\n\nOutput2:\n\n";
+    tokenize(data);
 
 	return 0;
 }
 
+// checks for pure digits. (literals)
 bool isDigit(string str)
 {
     for (int i = 0; i < str.size(); i++)
@@ -51,6 +49,7 @@ bool isDigit(string str)
     return true;
 }
 
+// Checks for a space, useful for moving to the next token
 bool isSpace(string str)
 {
 	return str == " " || str == "\n" || str == "\t";
@@ -59,7 +58,7 @@ bool isSpace(string str)
 // Checks for valid symbols, majority of which being operators
 bool isSymbol(string str)
 {
-	vector<string> tokens = {"/", "\x5C", "=","'", "''", "+", "-", "<", ">", "*", "#", "%", "!", "\x22", "\x22\x22", "|", "&", ".",
+	vector<string> tokens = {"/", "\x5C", "=","'", "''", "+", "-", "<", ">", ">&", "*", "#", "%", "!", "\x22", "\x22\x22", "|", "&", ".",
 							    "<<", ">>" , "<=", ">=", ">>=", "<<=", "-=", "+=", "*=", "/=",
 							       "++", "--", "==", "!=", "&&", "||", ":"};
 
@@ -70,31 +69,29 @@ bool isSymbol(string str)
 	return false;
 }
 
+// Checks for different types of literals we can have
 bool isWord_Digit_Bool(string str)
 {
-	return isBool(str) || isWord(str) || isDigit(str);
+	return isWord(str) || isDigit(str);
 }
 
+// Checks for string literals
 bool isWord(string str)
 {
     return ((str[0] == '"' && str[str.size() - 1] == '"') || (str[0] == '\x27' && str[str.size() - 1] == '\x27'));
 }
 
 
-bool isBool(string str)
-{
-	return str == "true" || str == "false";
-}
-
+// identifies comments (which are to be removed)
 bool isComment(string str)
 {
 	return str == "/*" || str == "//";
 }
 
-// removed: using, namespace, std, include
+// checks if a string is a keyword
 bool isKeyword(string str)
 {
-	vector<string>keywords = {"string", "double","float", "int", "const", "void", "bool", "char", "main",  "short","signed", "unsigned", "sizeof","static"
+	vector<string>keywords = {"string", "double","float", "int", "const", "void", "bool", "char", "main", "true", "false", "short","signed", "unsigned", "sizeof","static"
 							    "node", "typedef", "size_t", "enum", "union", "long","register", "auto",
 							    "vector", "struct", "class", "return", "for", "do", "while", "if", "else", 
                                 "extern", "switch", "case", "continue", "default", "goto" };
@@ -143,6 +140,7 @@ bool isIdentifier(string str)
 	return true;
 }
 
+// Outputs the passed in vector, values separated by commas
 void outputVector(vector<string> vec)
 {
   
@@ -156,18 +154,19 @@ void outputVector(vector<string> vec)
 
 }
 
-int removeComments(string fileName, string& data)
+// Reads data from a file, removes comments and any excess space or lines
+bool removeComments(string fileName, string& data)
 {
     string str = "";
     ifstream file(fileName);
 
     if (!file.is_open())
     {
-        cout << "\nERROR: Could not open the file.";
-        return 0;
+        cout << "ERROR: Could not open the file.\n";
+        return false;
     }
     else
-        cout << "\nFile was opened successfully.\n\nOutput1:\n\n";
+        cout << "File was opened successfully.\n\nOutput1:\n\n";
 
     string line = "";
     char character = '0';
@@ -227,9 +226,7 @@ int removeComments(string fileName, string& data)
         str += character;
     }
 
-    file.close();
-
-    string clean = "";
+    file.close();// close file as its not needed anymore
 
     // removes excess spaces, new lines, and any tabs (\t)
     for (int i = 0, j = 1; i < str.size(); i++, j++)
@@ -239,7 +236,7 @@ int removeComments(string fileName, string& data)
 
         if (str[i] == '\n' && (str[j] == ' ' || str[j] == '\n'))
         {
-            clean += str[i];
+            data += str[i];
 
             if (str[j] == ' ' || str [j] == '\n')
             {
@@ -252,7 +249,7 @@ int removeComments(string fileName, string& data)
         }
         else if (str[i] == ' ')
         {
-            clean += str[i];
+            data += str[i];
 
             if (str[j] == ' ')
             {
@@ -265,13 +262,12 @@ int removeComments(string fileName, string& data)
             
         }
         else
-            clean += str[i];
+            data += str[i];
     }
 
-    clean += "\n";
-    data = clean;
+    data += "\n";
 
-    return 1;
+    return true;
 }
 
 void tokenize(string str)
@@ -281,7 +277,7 @@ void tokenize(string str)
 
     vector<string> keywords, identifiers, operators, delimiters, literals;
 
-    // a flag that will help in skipping #include <iostream>
+    // a flag that will help in skipping #include <iostream>, the logic is we can skip until we find a keyword
     bool keywordFound = false;
 
     for (int i = 0; i < str.size(); i++)
@@ -308,21 +304,22 @@ void tokenize(string str)
 
             if ((string(1, character) == "\x22") || ((string(1, character) == "\x27")))
             {
-                line += character;
-                
+                char quoteType = character;
+
                 // skip until another quotation is found
                 while (i < str.size())
                 {
+                    line += character;
                     i++;
                     character = str[i];
-                    
+                   
                     if (character == '\n')
                     {
                         line += line[0];
                         break;
                     }
-                    else if (character == '\x22' || character == '\x27')
-                        break;
+                    else if (character == quoteType)
+                        break;     
                 }
             }
         }
@@ -358,15 +355,15 @@ void tokenize(string str)
     cout << "\n\nLiterals: "; outputVector(literals); cout << "\n\n";
 }
 
+// checks what type of token it is and stores it into the respective vector.
 void storeToken(string theToken, bool& keywordFound, vector<string>& keywords, vector<string>& identifiers, vector<string>& operators, vector<string>& delimiters, vector<string>& literals)
 {
     if (isKeyword(theToken))
     {
-        keywordFound = true; // change our flag so we can start adding valid tokens into our vectors
+        keywordFound = true; // change our flag so we can start adding valid tokens into our vectors, as we have skipped past #include
         keywords.push_back(theToken);
     }
-
-    if (keywordFound)
+    else if (keywordFound)
     {
         if (isWord_Digit_Bool(theToken))
         {
@@ -380,15 +377,9 @@ void storeToken(string theToken, bool& keywordFound, vector<string>& keywords, v
         {
             delimiters.push_back(theToken);
         }
-        else if (isKeyword(theToken))
-        {
-            keywords.push_back(theToken);
-        }
         else if (isIdentifier(theToken))
         {
             identifiers.push_back(theToken);
         }
     }
 }
-
-
