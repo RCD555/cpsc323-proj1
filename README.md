@@ -1,4 +1,4 @@
-# CPSC-351 Project 1:
+# CPSC-323 Project 1:
 Objective: The objective of this project is to develop a
 data processing application that reads data from an input
 file, processes the data, removes excess space and
